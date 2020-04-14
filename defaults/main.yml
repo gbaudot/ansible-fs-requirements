@@ -1,0 +1,10 @@
+---
+# defaults file for gbaudot.ansible-fs-requirements
+
+# empty requirements should be satisfied
+filesystem_requirements: []
+
+# debug verbosity for filesystem_requirements or mount_point_requirements structures
+req_grp_verb: 1
+# debug verbosity for in loop path or mount point requirements
+req_unit_verb: 2

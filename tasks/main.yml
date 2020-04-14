@@ -1,0 +1,24 @@
+---
+# tasks file for gbaudot.ansible-fs-requirements
+
+- name: debug filesystem_requirements
+  debug:
+    var: filesystem_requirements
+    verbosity: "{{ req_grp_verb }}"
+
+- name: turn filesystem_requirements to mount_point_requirements
+  include_tasks: fs2mp.yml
+  loop: "{{ filesystem_requirements }}"
+  loop_control:
+    loop_var: fsreq
+
+- name: debug mount_point_requirements
+  debug:
+    var: mount_point_requirements
+    verbosity: "{{ req_grp_verb }}"
+
+- name: check mount_point_requirements
+  include_tasks: checkreq.yml
+  loop: "{{ mount_point_requirements | default({}) | dict2items }}"
+  loop_control:
+    loop_var: mpreq

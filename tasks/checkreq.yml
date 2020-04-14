@@ -1,0 +1,23 @@
+---
+# assertions to verify mount_point_requirements
+
+- name: debug mpreq
+  debug:
+    var: mpreq
+    verbosity: "{{ req_unit_verb }}"
+
+- name: check free space
+  assert:
+    that:
+      - mpreq.value.size <= ansible_mounts | json_query("[?mount=='" + mpreq.key + "'].size_available") | first
+    fail_msg: >
+      Not enough free space on {{ mpreq.key }}: {{ mpreq.value.size | human_readable }} required / {{ ansible_mounts | json_query("[?mount=='" + mpreq.key + "'].size_available") | first | human_readable }} available.
+  when: mpreq.value.size is defined
+
+- name: check free inodes
+  assert:
+    that:
+      - mpreq.value.inodes <= ansible_mounts | json_query("[?mount=='" + mpreq.key + "'].inode_available") | first
+    fail_msg: >
+      Not enough free inodes on {{ mpreq.key }}: {{ mpreq.value.inodes | human_readable }} required / {{ ansible_mounts | json_query("[?mount=='" + mpreq.key + "'].inode_available") | first | human_readable }} available.
+  when: mpreq.value.inodes is defined

@@ -1,0 +1,40 @@
+---
+# fill in mount_point_requirements depending on given filesystem requirement
+
+- name: longest existing path (as shell script)
+  shell: |
+    test_path="{{ fsreq.path }}"
+    while [ ! -e "$test_path" ]; do
+      test_path="$( dirname "$test_path")"
+    done
+    echo "$test_path"
+  register: longest_path
+
+- name: only if not found
+  block:
+    - name: identify mount point
+      command: "stat --printf=%m {{ longest_path.stdout | dirname }}"
+      register: mount_point
+
+    - name: debug mount point
+      debug:
+        var: mount_point
+        verbosity: "{{ req_unit_verb }}"
+
+    - name: populate mount_point_requirements
+      set_fact:
+        mount_point_requirements: >
+          {{ mount_point_requirements | default({}) | combine
+          ({
+            mount_point.stdout: {
+              'inodes': fsreq.inodes|default(0)|human_to_bytes + mount_point_requirements[mount_point.stdout].inodes,
+              'size': fsreq.size|default(0)|human_to_bytes + mount_point_requirements[mount_point.stdout].size
+            }
+          } if mount_point_requirements[mount_point.stdout] is defined else {
+            mount_point.stdout: {
+              'inodes': fsreq.inodes|default(0)|human_to_bytes,
+              'size': fsreq.size|default(0)|human_to_bytes
+            }
+          })}}
+
+  when: fsreq.path != longest_path.stdout
